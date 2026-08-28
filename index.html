@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Operación Culiacán - UI Prototype</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0d0f12;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+        }
+        
+        /* Simulación de Fondo de Juego */
+        #game-canvas {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #2a323d 0%, #090a0c 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .crosshair {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+            transition: transform 0.1s ease;
+        }
+
+        /* CAPA DE HUD / INTERFAZ */
+        .hud-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .interactive {
+            pointer-events: auto;
+        }
+
+        /* Superior Izquierda: Minimapa */
+        .minimap {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 110px;
+            height: 110px;
+            border: 2px solid rgba(0, 255, 204, 0.5);
+            background: rgba(10, 20, 15, 0.8);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #00ffcc;
+        }
+
+        /* Superior Derecha: Estado y Mapeo */
+        .status-panel {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            text-align: right;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border-right: 3px solid #ff4444;
+        }
+        .health-bar {
+            width: 120px;
+            height: 8px;
+            background: #333;
+            margin-top: 4px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .health-fill {
+            width: 85%;
+            height: 100%;
+            background: #ff4444;
+        }
+
+        /* Controles Inferior Izquierda: Joystick y Lean */
+        .control-group-left {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 150px;
+            height: 150px;
+        }
+        .joystick-base {
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .joystick-stick {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 255, 204, 0.6);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+        }
+        .btn-lean {
+            position: absolute;
+            top: -20px;
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid #fff;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: bold;
+        }
+        .btn-lean-l { left: 0; }
+        .btn-lean-r { left: 55px; }
+
+        /* Controles Inferior Derecha: Disparo y Apuntado */
+        .control-group-right {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 180px;
+            height: 180px;
+        }
+        .btn-action {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .btn-fire {
+            width: 75px;
+            height: 75px;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 68, 68, 0.4);
+            border-color: #ff4444;
+        }
+        .btn-ads {
+            width: 55px;
+            height: 55px;
+            bottom: 105px;
+            right: 30px;
+            background: rgba(0, 255, 204, 0.2);
+            border-color: #00ffcc;
+        }
+        .btn-reload {
+            width: 45px;
+            height: 45px;
+            bottom: 30px;
+            right: 110px;
+        }
+
+        /* Feed de Eventos */
+        #log-feed {
+            position: absolute;
+            top: 140px;
+            left: 15px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        .active-btn {
+            background: rgba(255, 255, 255, 0.5) !important;
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-canvas">
+        <div class="crosshair" id="crosshair"></div>
+        <p style="color: #444; font-size: 14px; text-align: center;">ENTORNO DE PRUEBA 3D<br><small>(Arrastra la pantalla derecha para mirar)</small></p>
+    </div>
+
+    <div class="hud-overlay">
+        <div class="minimap">
+            <span>SECTOR 4</span>
+            <b style="color:#fff; margin-top:5px;">CULIACÁN</b>
+        </div>
+
+        <div class="status-panel">
+            <div style="font-size: 12px; font-weight: bold;">SALUD: 85%</div>
+            <div class="health-bar"><div class="health-fill"></div></div>
+            <div style="font-size: 14px; font-weight: bold; margin-top: 6px; color: #00ffcc;">
+                30 / 120 <span style="font-size: 9px; color: #fff;">5.56mm</span>
+            </div>
+        </div>
+
+        <div id="log-feed"></div>
+
+        <div class="control-group-left">
+            <button class="btn-lean btn-lean-l interactive" id="leanL">Q</button>
+            <button class="btn-lean btn-lean-r interactive" id="leanR">E</button>
+            <div class="joystick-base interactive" id="joystick">
+                <div class="joystick-stick" id="stick"></div>
+            </div>
+        </div>
+
+        <div class="control-group-right">
+            <div class="btn-action btn-reload interactive" id="btnReload">R</div>
+            <div class="btn-action btn-ads interactive" id="btnADS">ADS</div>
+            <div class="btn-action btn-fire interactive" id="btnFire">FUEGO</div>
+        </div>
+    </div>
+
+    <script>
+        const logFeed = document.getElementById('log-feed');
+        const crosshair = document.getElementById('crosshair');
+
+        function addLog(text) {
+            const entry = document.createElement('div');
+            entry.textContent = `> ${text}`;
+            logFeed.appendChild(entry);
+            if (logFeed.childNodes.length > 5) logFeed.removeChild(logFeed.firstChild);
+        }
+
+        // Eventos de botones táctiles
+        document.querySelectorAll('.interactive').forEach(elem => {
+            elem.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                elem.classList.add('active-btn');
+                triggerAction(elem.id);
+            });
+            elem.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                elem.classList.remove('active-btn');
+            });
+            elem.addEventListener('mousedown', () => {
+                elem.classList.add('active-btn');
+                triggerAction(elem.id);
+            });
+            elem.addEventListener('mouseup', () => {
+                elem.classList.remove('active-btn');
+            });
+        });
+
+        function triggerAction(id) {
+            switch(id) {
+                case 'btnFire':
+                    addLog('Disparo efectuado (Calibre 5.56mm)');
+                    crosshair.style.transform = 'scale(1.8)';
+                    setTimeout(() => crosshair.style.transform = 'scale(1)', 100);
+                    break;
+                case 'btnADS':
+                    addLog('Puntería de precisión (ADS) Activada');
+                    break;
+                case 'btnReload':
+                    addLog('Recargando cargador...');
+                    break;
+                case 'leanL':
+                    addLog('Inclinación Izquierda (Lean L)');
+                    break;
+                case 'leanR':
+                    addLog('Inclinación Derecha (Lean R)');
+                    break;
+            }
+        }
+    </script>
+</body>
+</html>
